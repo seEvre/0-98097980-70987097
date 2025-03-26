@@ -33,32 +33,29 @@ def process_image(uploaded_image):
     sepia = np.clip(sepia, 0, 255).astype(np.uint8)
     bottom_layer = Image.fromarray(sepia)
     
-    # 7. Merge layers (top and bottom layers are blended here)
-    merged_image = Image.blend(bottom_layer, top_layer, 1)
-    merged_image = merged_image.convert("RGBA")  # Convert to RGBA
-    
-    # 8. Create text layer (now this will be the bottom layer)
+    # 7. Create text layer (this layer will be the bottom one, so we composite it last)
     text_layer = Image.new("RGBA", canvas_size, (255, 255, 255, 0))
     draw = ImageDraw.Draw(text_layer)
     
     ad_text = "FLUORINES COOL CLOTHING SHOP!!"
     
-    # 9. Use DejaVuSans-Bold font available by default in Streamlit Cloud with size 90
+    # 8. Use DejaVuSans-Bold font available by default in Streamlit Cloud with size 95
     try:
-        font = ImageFont.truetype("DejaVuSans-Bold.ttf", 90)  # Set font size to 90
+        font = ImageFont.truetype("DejaVuSans-Bold.ttf", 95)  # Set font size to 95
     except:
         font = ImageFont.load_default()  # Fallback to default font if DejaVuSans-Bold is unavailable
     
-    # 10. Get text dimensions and center it using textbbox
+    # 9. Get text dimensions and center it using textbbox
     text_bbox = draw.textbbox((0, 0), ad_text, font=font)
     text_width, text_height = text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1]  # Calculate width and height
     text_position = ((canvas_size[0] - text_width) // 2, (canvas_size[1] - text_height) // 2)
     
-    # 11. Draw the text on the text layer
+    # 10. Draw the text on the text layer
     draw.text(text_position, ad_text, fill=(0, 0, 0, 255), font=font)
     
-    # 12. Composite the text layer below the image layers
-    final_image = Image.alpha_composite(merged_image, text_layer)
+    # 11. Merge the image layers on top of the text (so text is at the bottom)
+    final_image = Image.alpha_composite(text_layer, bottom_layer)  # Composite the text as bottom layer first
+    final_image = Image.alpha_composite(final_image, top_layer)  # Composite the other image layers on top
     
     return final_image
 
