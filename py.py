@@ -36,14 +36,14 @@ def process_image(uploaded_image):
     # Merge layers
     merged_image = Image.blend(bottom_layer, top_layer, 1)
     
-    # Add text overlay
+    # Add text overlay covering the entire image
     draw = ImageDraw.Draw(merged_image)
-    font_size = 50
+    font_size = 100  # Increased font size to cover the image
     try:
         font = ImageFont.truetype("arial.ttf", font_size)
     except:
         font = ImageFont.load_default()
-    text = "YOUR AD HERE"
+    text = "Shop at Fluorine's Awesome Clothing Shop!!"
     text_width, text_height = draw.textbbox((0, 0), text, font=font)[2:]
     text_position = ((canvas_size[0] - text_width) // 2, (canvas_size[1] - text_height) // 2)
     draw.text(text_position, text, fill="black", font=font)
@@ -57,7 +57,7 @@ def main():
     if uploaded_file is not None:
         with st.spinner("Processing image..."):
             processed_image = process_image(uploaded_file)
-            st.image(processed_image, caption="Processed Image", use_column_width=True)
+            st.image(processed_image, caption="Processed Image", use_container_width=True)  # Updated parameter
             
             # Provide download option
             processed_image.save("output.png")
