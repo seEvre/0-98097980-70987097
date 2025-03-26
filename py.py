@@ -53,10 +53,21 @@ def process_image(uploaded_image):
     bottom_layer = Image.fromarray(sepia)
     bottom_layer = bottom_layer.putalpha(204)  # Apply opacity (204 out of 255)
     
-    # 9. Merge the top and bottom layers
-    merged_image = Image.alpha_composite(bottom_layer, top_layer)
+    # Debugging: Check if layers are created correctly
+    if top_layer is None or bottom_layer is None:
+        raise ValueError("Top or Bottom layers are not created properly.")
     
-    # 10. Create a new text layer (below the image layers)
+    # 9. Ensure layers are in RGBA format
+    top_layer = top_layer.convert("RGBA")
+    bottom_layer = bottom_layer.convert("RGBA")
+    
+    # 10. Merge the top and bottom layers
+    try:
+        merged_image = Image.alpha_composite(bottom_layer, top_layer)
+    except Exception as e:
+        raise ValueError(f"Error during image compositing: {e}")
+    
+    # 11. Create a new text layer (below the image layers)
     text_layer = Image.new("RGBA", canvas_size, (255, 255, 255, 0))
     draw = ImageDraw.Draw(text_layer)
     
@@ -69,14 +80,20 @@ def process_image(uploaded_image):
     except:
         font = ImageFont.load_default()
     
-    # 11. Get text dimensions and center it
-    text_width, text_height = draw.textbbox((0, 0), ad_text, font=font)[2:]
+    # 12. Get text dimensions and center it
+    text_bbox = draw.textbbox((0, 0), ad_text, font=font)
+    text_width, text_height = text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1]
     text_position = ((canvas_size[0] - text_width) // 2, (canvas_size[1] - text_height) // 2)
     
-    # 12. Draw the text on the text layer
-    draw.text(text_position, ad_text, fill=(0, 0, 0, 255), font=font)
+    # 13. Draw the text on the text layer
+    text_fill = (0, 0, 0, 150)  # Adjust the alpha for opacity (150 means semi-transparent)
+    draw.text(text_position, ad_text, fill=text_fill, font=font)
     
-    # 13. Composite the text layer over the image
+    # Debugging: Check if text layer is created properly
+    if text_layer is None:
+        raise ValueError("Text layer is not created properly.")
+    
+    # 14. Composite the text layer over the image
     final_image = Image.alpha_composite(merged_image, text_layer)
     
     return final_image
@@ -87,20 +104,23 @@ def main():
     
     if uploaded_file is not None:
         with st.spinner("Processing image..."):
-            processed_image = process_image(uploaded_file)
-            
-            # Display the processed image
-            st.image(processed_image, caption="Processed Image", use_container_width=True)
-            
-            # Provide download option
-            processed_image.save("output.png")
-            with open("output.png", "rb") as file:
-                st.download_button(
-                    label="Download Processed Image",
-                    data=file,
-                    file_name="processed_image.png",
-                    mime="image/png"
-                )
+            try:
+                processed_image = process_image(uploaded_file)
+                
+                # Display the processed image
+                st.image(processed_image, caption="Processed Image", use_container_width=True)
+                
+                # Provide download option
+                processed_image.save("output.png")
+                with open("output.png", "rb") as file:
+                    st.download_button(
+                        label="Download Processed Image",
+                        data=file,
+                        file_name="processed_image.png",
+                        mime="image/png"
+                    )
+            except Exception as e:
+                st.error(f"An error occurred during processing: {e}")
 
 if __name__ == "__main__":
     main()
