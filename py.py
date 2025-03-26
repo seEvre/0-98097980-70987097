@@ -1,80 +1,84 @@
+import streamlit as st
 from PIL import Image, ImageEnhance, ImageFilter, ImageDraw, ImageFont
 import numpy as np
-import streamlit as st
+
+def remove_black_and_make_transparent(img):
+    """Remove black and make it transparent."""
+    img_rgba = img.convert("RGBA")  # Convert image to RGBA for transparency support
+    width, height = img.size
+    pixels = img_rgba.load()
+    
+    # Iterate through all pixels
+    for y in range(height):
+        for x in range(width):
+            r, g, b, a = pixels[x, y]
+            
+            # Check if the pixel is black (or very close to black)
+            if r < 30 and g < 30 and b < 30:  # You can adjust the threshold
+                pixels[x, y] = (0, 0, 0, 0)  # Set pixel to fully transparent
+    return img_rgba
 
 def process_image(uploaded_image):
-    # Set canvas size
+    # 1. Set canvas size
     canvas_size = (2000, 133)
     
-    # 1. Open and resize image early for efficiency
+    # 2. Open and resize image for efficiency
     img = Image.open(uploaded_image).convert("RGB")
     img = img.resize(canvas_size, Image.Resampling.LANCZOS)
     
-    # 2. Convert to black and white
+    # 3. Convert to black and white
     img = img.convert("L").convert("RGB")
     
-    # 3. Adjust brightness and contrast
+    # 4. Adjust brightness and contrast
     img = ImageEnhance.Brightness(img).enhance(1.1)
     img = ImageEnhance.Contrast(img).enhance(0.9)
     
-    # 4. Duplicate the image
+    # 5. Remove black and make transparent
+    img = remove_black_and_make_transparent(img)
+    
+    # 6. Duplicate the image (top and bottom layers)
     top_layer = img.copy()
     bottom_layer = img.copy()
     
-    # 5. Apply Gaussian Blur to top layer
-    top_layer = top_layer.filter(ImageFilter.GaussianBlur(10))
-    top_layer = Image.blend(img, top_layer, 0.48)
+    # 7. Apply Gaussian Blur to top layer
+    top_layer = top_layer.filter(ImageFilter.GaussianBlur(17))
+    top_layer = top_layer.putalpha(122)  # Apply opacity (122 out of 255)
     
-    # 6. Apply Sepia tone using NumPy to bottom layer
+    # 8. Apply Sepia tone to bottom layer
     sepia = np.array(bottom_layer, dtype=np.float32)
     sepia[:, :, 0] *= 1.2  # Red channel
     sepia[:, :, 1] *= 1.0  # Green channel
     sepia[:, :, 2] *= 0.8  # Blue channel
     sepia = np.clip(sepia, 0, 255).astype(np.uint8)
     bottom_layer = Image.fromarray(sepia)
+    bottom_layer = bottom_layer.putalpha(204)  # Apply opacity (204 out of 255)
     
-    # 7. Convert all layers to RGBA mode to match for alpha compositing
-    top_layer = top_layer.convert("RGBA")
-    bottom_layer = bottom_layer.convert("RGBA")
+    # 9. Merge the top and bottom layers
+    merged_image = Image.alpha_composite(bottom_layer, top_layer)
     
-    # 8. Create text layer (this layer will be the bottom one, so we composite it last)
-    text_layer = Image.new("RGBA", canvas_size, (255, 255, 255, 0))  # Ensure text_layer is RGBA
+    # 10. Create a new text layer (below the image layers)
+    text_layer = Image.new("RGBA", canvas_size, (255, 255, 255, 0))
     draw = ImageDraw.Draw(text_layer)
     
+    # Add text to be displayed
     ad_text = "FLUORINES COOL CLOTHING SHOP!!"
     
-    # 9. Use DejaVuSans-Bold font available by default in Streamlit Cloud with size 95
+    # Attempt to load the DejaVuSans-Bold font; otherwise, fallback to default
     try:
         font = ImageFont.truetype("DejaVuSans-Bold.ttf", 95)  # Set font size to 95
     except:
-        font = ImageFont.load_default()  # Fallback to default font if DejaVuSans-Bold is unavailable
+        font = ImageFont.load_default()
     
-    # 10. Get text dimensions and center it using textbbox
-    text_bbox = draw.textbbox((0, 0), ad_text, font=font)
-    text_width, text_height = text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1]  # Calculate width and height
+    # 11. Get text dimensions and center it
+    text_width, text_height = draw.textbbox((0, 0), ad_text, font=font)[2:]
     text_position = ((canvas_size[0] - text_width) // 2, (canvas_size[1] - text_height) // 2)
     
-    # 11. Draw the text on the text layer with adjusted opacity (alpha value in fill)
-    text_fill = (0, 0, 0, 150)  # Adjust the alpha for opacity (150 means semi-transparent)
-    draw.text(text_position, ad_text, fill=text_fill, font=font)
+    # 12. Draw the text on the text layer
+    draw.text(text_position, ad_text, fill=(0, 0, 0, 255), font=font)
     
-    # 12. Adjust opacity for the image layers (using alpha blending)
-    top_layer = top_layer.convert("RGBA")
-    bottom_layer = bottom_layer.convert("RGBA")
+    # 13. Composite the text layer over the image
+    final_image = Image.alpha_composite(merged_image, text_layer)
     
-    # Create a semi-transparent version of the image layers (opacity 0.6 for the top and bottom layers)
-    top_layer.putalpha(153)  # 153 out of 255 for 60% opacity
-    bottom_layer.putalpha(204)  # 204 out of 255 for 80% opacity
-    
-    # 13. Composite layers (text at the bottom, image layers on top)
-    try:
-        # Ensure the layers are not None and composited correctly
-        final_image = Image.alpha_composite(bottom_layer, text_layer)  # Composite text as bottom layer first
-        final_image = Image.alpha_composite(final_image, top_layer)  # Composite other image layers on top
-    except Exception as e:
-        print(f"Error during alpha_composite: {e}")
-        final_image = img.convert("RGBA")  # If error occurs, return the original image
-
     return final_image
 
 def main():
@@ -85,7 +89,7 @@ def main():
         with st.spinner("Processing image..."):
             processed_image = process_image(uploaded_file)
             
-            # Use the newer parameter
+            # Display the processed image
             st.image(processed_image, caption="Processed Image", use_container_width=True)
             
             # Provide download option
