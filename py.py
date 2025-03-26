@@ -54,6 +54,9 @@ def process_image(uploaded_image):
     if top_layer is None or bottom_layer is None:
         raise ValueError("Layer duplication failed: one of the layers is None.")
     
+    # Debugging: Check top_layer and bottom_layer
+    print(f"Top Layer: {top_layer}, Bottom Layer: {bottom_layer}")
+    
     # 7. Apply Gaussian Blur to top layer
     try:
         top_layer = top_layer.filter(ImageFilter.GaussianBlur(17))
