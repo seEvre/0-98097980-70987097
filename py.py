@@ -26,6 +26,7 @@ def process_image(uploaded_image):
     try:
         img = Image.open(uploaded_image).convert("RGB")
         img = img.resize(canvas_size, Image.Resampling.LANCZOS)
+        print("Image loaded and resized successfully.")
     except Exception as e:
         raise ValueError(f"Error opening or resizing image: {e}")
     
@@ -43,6 +44,7 @@ def process_image(uploaded_image):
     try:
         top_layer = img.copy()
         bottom_layer = img.copy()
+        print("Layers created successfully.")
         if top_layer is None or bottom_layer is None:
             raise ValueError("Top or Bottom layers are None after copying.")
     except Exception as e:
@@ -56,6 +58,7 @@ def process_image(uploaded_image):
     try:
         top_layer = top_layer.filter(ImageFilter.GaussianBlur(17))
         top_layer = top_layer.putalpha(122)  # Apply opacity (122 out of 255)
+        print("Gaussian blur applied to top layer.")
     except Exception as e:
         raise ValueError(f"Error applying Gaussian blur to top layer: {e}")
     
@@ -68,13 +71,16 @@ def process_image(uploaded_image):
         sepia = np.clip(sepia, 0, 255).astype(np.uint8)
         bottom_layer = Image.fromarray(sepia)
         bottom_layer = bottom_layer.putalpha(204)  # Apply opacity (204 out of 255)
+        print("Sepia tone applied to bottom layer.")
     except Exception as e:
         raise ValueError(f"Error applying sepia tone to bottom layer: {e}")
     
     # 9. Ensure layers are in RGBA format
     try:
+        print(f"Converting layers to RGBA...")
         top_layer = top_layer.convert("RGBA")
         bottom_layer = bottom_layer.convert("RGBA")
+        print(f"Conversion successful: top_layer mode={top_layer.mode}, bottom_layer mode={bottom_layer.mode}")
     except Exception as e:
         raise ValueError(f"Error converting layers to RGBA: {e}")
     
@@ -88,6 +94,7 @@ def process_image(uploaded_image):
     
     # 10. Merge the top and bottom layers
     try:
+        print("Merging layers...")
         merged_image = Image.alpha_composite(bottom_layer, top_layer)
     except Exception as e:
         raise ValueError(f"Error during image compositing: {e}")
@@ -121,6 +128,7 @@ def process_image(uploaded_image):
     
     # 14. Composite the text layer over the image
     try:
+        print("Compositing text layer over image...")
         final_image = Image.alpha_composite(merged_image, text_layer)
     except Exception as e:
         raise ValueError(f"Error during final compositing: {e}")
