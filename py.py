@@ -45,16 +45,17 @@ def process_image(uploaded_image):
     
     # Attempt to load a TTF font; otherwise, fallback
     try:
-        font_size = 10  # Start with small font size
-        font = ImageFont.truetype("arial.ttf", font_size)
+        font_path = "arial.ttf"
+        font_size = 10  # Start small
+        font = ImageFont.truetype(font_path, font_size)
         
-        # Dynamically find the max font size that fits the width
+        # Dynamically find the max font size that fits the width & height
         while True:
-            text_width = draw.textbbox((0, 0), ad_text, font=font)[2]
-            if text_width >= canvas_size[0] * 0.95:  # 95% of width
-                break
+            text_width, text_height = draw.textbbox((0, 0), ad_text, font=font)[2:]
+            if text_width >= canvas_size[0] * 0.98 or text_height >= canvas_size[1] * 0.98:
+                break  # Stop when it's just below the max size
             font_size += 2
-            font = ImageFont.truetype("arial.ttf", font_size)
+            font = ImageFont.truetype(font_path, font_size)
 
     except:
         font = ImageFont.load_default()
