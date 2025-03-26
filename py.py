@@ -21,7 +21,7 @@ def process_image(uploaded_image):
     top_layer = img.copy()
     bottom_layer = img.copy()
     
-    # 5. Apply Gaussian Blur efficiently to top layer
+    # 5. Apply Gaussian Blur to top layer
     top_layer = top_layer.filter(ImageFilter.GaussianBlur(10))
     top_layer = Image.blend(img, top_layer, 0.48)
     
@@ -37,36 +37,36 @@ def process_image(uploaded_image):
     merged_image = Image.blend(bottom_layer, top_layer, 1)
     merged_image = merged_image.convert("RGBA")  # Convert to RGBA
     
-    # 8. Create text pattern layer
+    # 8. Create text layer
     text_layer = Image.new("RGBA", canvas_size, (255, 255, 255, 0))
     draw = ImageDraw.Draw(text_layer)
     
-    ad_text = "Shop at Fluorine's Awesome Clothing Shop!!"
-    base_font_size = 50
+    ad_text = "FLUORINES COOL CLOTHING SHOP!!"
     
     # Attempt to load a TTF font; otherwise, fallback
     try:
-        font = ImageFont.truetype("arial.ttf", base_font_size)
+        font_size = 10  # Start with small font size
+        font = ImageFont.truetype("arial.ttf", font_size)
+        
+        # Dynamically find the max font size that fits the width
+        while True:
+            text_width = draw.textbbox((0, 0), ad_text, font=font)[2]
+            if text_width >= canvas_size[0] * 0.95:  # 95% of width
+                break
+            font_size += 2
+            font = ImageFont.truetype("arial.ttf", font_size)
+
     except:
         font = ImageFont.load_default()
     
-    # Get text bounding box
-    dummy_img = Image.new("RGB", (1, 1))
-    dummy_draw = ImageDraw.Draw(dummy_img)
-    bbox = dummy_draw.textbbox((0, 0), ad_text, font=font)
-    text_width = bbox[2] - bbox[0]
-    text_height = bbox[3] - bbox[1]
+    # 9. Center text
+    text_width, text_height = draw.textbbox((0, 0), ad_text, font=font)[2:]
+    text_position = ((canvas_size[0] - text_width) // 2, (canvas_size[1] - text_height) // 2)
     
-    # Spacing so text repeats across the entire canvas
-    spacing_x = text_width + 40
-    spacing_y = text_height + 40
+    # 10. Draw the text
+    draw.text(text_position, ad_text, fill=(0, 0, 0, 255), font=font)
     
-    # 9. Repeat text across the entire text_layer
-    for y in range(0, canvas_size[1], spacing_y):
-        for x in range(0, canvas_size[0], spacing_x):
-            draw.text((x, y), ad_text, fill=(0, 0, 0, 255), font=font)
-    
-    # 10. Composite text on top of the processed image
+    # 11. Composite text over image
     final_image = Image.alpha_composite(merged_image, text_layer)
     
     return final_image
