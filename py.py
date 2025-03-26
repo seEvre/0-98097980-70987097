@@ -54,10 +54,19 @@ def process_image(uploaded_image):
     text_width, text_height = text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1]  # Calculate width and height
     text_position = ((canvas_size[0] - text_width) // 2, (canvas_size[1] - text_height) // 2)
     
-    # 11. Draw the text on the text layer
-    draw.text(text_position, ad_text, fill=(0, 0, 0, 255), font=font)
+    # 11. Draw the text on the text layer with adjusted opacity (alpha value in fill)
+    text_fill = (0, 0, 0, 150)  # Adjust the alpha for opacity (150 means semi-transparent)
+    draw.text(text_position, ad_text, fill=text_fill, font=font)
     
-    # 12. Composite layers (text at the bottom, image layers on top)
+    # 12. Adjust opacity for the image layers (using alpha blending)
+    top_layer = top_layer.convert("RGBA")
+    bottom_layer = bottom_layer.convert("RGBA")
+    
+    # Create a semi-transparent version of the image layers (opacity 0.6 for the top and bottom layers)
+    top_layer = top_layer.putalpha(153)  # 153 out of 255 for 60% opacity
+    bottom_layer = bottom_layer.putalpha(204)  # 204 out of 255 for 80% opacity
+    
+    # 13. Composite layers (text at the bottom, image layers on top)
     final_image = Image.alpha_composite(bottom_layer, text_layer)  # Composite text as bottom layer first
     final_image = Image.alpha_composite(final_image, top_layer)  # Composite other image layers on top
     
