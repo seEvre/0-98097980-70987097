@@ -37,29 +37,37 @@ def process_image(uploaded_image):
     img = remove_black_and_make_transparent(img)
     
     # 6. Duplicate the image (top and bottom layers)
-    top_layer = img.copy()
-    bottom_layer = img.copy()
+    try:
+        top_layer = img.copy()
+        bottom_layer = img.copy()
+        if top_layer is None or bottom_layer is None:
+            raise ValueError("Top or Bottom layers are None.")
+    except Exception as e:
+        raise ValueError(f"Error during layer duplication: {e}")
     
     # 7. Apply Gaussian Blur to top layer
     top_layer = top_layer.filter(ImageFilter.GaussianBlur(17))
     top_layer = top_layer.putalpha(122)  # Apply opacity (122 out of 255)
     
     # 8. Apply Sepia tone to bottom layer
-    sepia = np.array(bottom_layer, dtype=np.float32)
-    sepia[:, :, 0] *= 1.2  # Red channel
-    sepia[:, :, 1] *= 1.0  # Green channel
-    sepia[:, :, 2] *= 0.8  # Blue channel
-    sepia = np.clip(sepia, 0, 255).astype(np.uint8)
-    bottom_layer = Image.fromarray(sepia)
-    bottom_layer = bottom_layer.putalpha(204)  # Apply opacity (204 out of 255)
-    
-    # Debugging: Check if layers are created correctly
-    if top_layer is None or bottom_layer is None:
-        raise ValueError("Top or Bottom layers are not created properly.")
+    try:
+        sepia = np.array(bottom_layer, dtype=np.float32)
+        sepia[:, :, 0] *= 1.2  # Red channel
+        sepia[:, :, 1] *= 1.0  # Green channel
+        sepia[:, :, 2] *= 0.8  # Blue channel
+        sepia = np.clip(sepia, 0, 255).astype(np.uint8)
+        bottom_layer = Image.fromarray(sepia)
+        bottom_layer = bottom_layer.putalpha(204)  # Apply opacity (204 out of 255)
+    except Exception as e:
+        raise ValueError(f"Error applying sepia tone to bottom layer: {e}")
     
     # 9. Ensure layers are in RGBA format
     top_layer = top_layer.convert("RGBA")
     bottom_layer = bottom_layer.convert("RGBA")
+    
+    # Debugging: Check layer sizes
+    if top_layer.size != bottom_layer.size:
+        raise ValueError(f"Top and Bottom layers have different sizes: {top_layer.size}, {bottom_layer.size}")
     
     # 10. Merge the top and bottom layers
     try:
@@ -77,8 +85,9 @@ def process_image(uploaded_image):
     # Attempt to load the DejaVuSans-Bold font; otherwise, fallback to default
     try:
         font = ImageFont.truetype("DejaVuSans-Bold.ttf", 95)  # Set font size to 95
-    except:
+    except Exception as e:
         font = ImageFont.load_default()
+        st.warning(f"Font loading failed, using default. Error: {e}")
     
     # 12. Get text dimensions and center it
     text_bbox = draw.textbbox((0, 0), ad_text, font=font)
@@ -94,7 +103,10 @@ def process_image(uploaded_image):
         raise ValueError("Text layer is not created properly.")
     
     # 14. Composite the text layer over the image
-    final_image = Image.alpha_composite(merged_image, text_layer)
+    try:
+        final_image = Image.alpha_composite(merged_image, text_layer)
+    except Exception as e:
+        raise ValueError(f"Error during final compositing: {e}")
     
     return final_image
 
