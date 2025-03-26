@@ -48,6 +48,10 @@ def process_image(uploaded_image):
     except Exception as e:
         raise ValueError(f"Error during layer duplication: {e}")
     
+    # Debugging: Check if top_layer and bottom_layer are created
+    if top_layer is None or bottom_layer is None:
+        raise ValueError("Layer duplication failed: one of the layers is None.")
+    
     # 7. Apply Gaussian Blur to top layer
     try:
         top_layer = top_layer.filter(ImageFilter.GaussianBlur(17))
@@ -73,6 +77,10 @@ def process_image(uploaded_image):
         bottom_layer = bottom_layer.convert("RGBA")
     except Exception as e:
         raise ValueError(f"Error converting layers to RGBA: {e}")
+    
+    # Debugging: Verify that layers have been converted correctly
+    if top_layer.mode != 'RGBA' or bottom_layer.mode != 'RGBA':
+        raise ValueError(f"Layer conversion failed: top_layer mode={top_layer.mode}, bottom_layer mode={bottom_layer.mode}")
     
     # Debugging: Check layer sizes and if they are created properly
     if top_layer.size != bottom_layer.size:
