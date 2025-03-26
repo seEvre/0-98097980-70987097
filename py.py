@@ -23,8 +23,11 @@ def process_image(uploaded_image):
     canvas_size = (2000, 133)
     
     # 2. Open and resize image for efficiency
-    img = Image.open(uploaded_image).convert("RGB")
-    img = img.resize(canvas_size, Image.Resampling.LANCZOS)
+    try:
+        img = Image.open(uploaded_image).convert("RGB")
+        img = img.resize(canvas_size, Image.Resampling.LANCZOS)
+    except Exception as e:
+        raise ValueError(f"Error opening or resizing image: {e}")
     
     # 3. Convert to black and white
     img = img.convert("L").convert("RGB")
@@ -41,13 +44,16 @@ def process_image(uploaded_image):
         top_layer = img.copy()
         bottom_layer = img.copy()
         if top_layer is None or bottom_layer is None:
-            raise ValueError("Top or Bottom layers are None.")
+            raise ValueError("Top or Bottom layers are None after copying.")
     except Exception as e:
         raise ValueError(f"Error during layer duplication: {e}")
     
     # 7. Apply Gaussian Blur to top layer
-    top_layer = top_layer.filter(ImageFilter.GaussianBlur(17))
-    top_layer = top_layer.putalpha(122)  # Apply opacity (122 out of 255)
+    try:
+        top_layer = top_layer.filter(ImageFilter.GaussianBlur(17))
+        top_layer = top_layer.putalpha(122)  # Apply opacity (122 out of 255)
+    except Exception as e:
+        raise ValueError(f"Error applying Gaussian blur to top layer: {e}")
     
     # 8. Apply Sepia tone to bottom layer
     try:
@@ -62,10 +68,13 @@ def process_image(uploaded_image):
         raise ValueError(f"Error applying sepia tone to bottom layer: {e}")
     
     # 9. Ensure layers are in RGBA format
-    top_layer = top_layer.convert("RGBA")
-    bottom_layer = bottom_layer.convert("RGBA")
+    try:
+        top_layer = top_layer.convert("RGBA")
+        bottom_layer = bottom_layer.convert("RGBA")
+    except Exception as e:
+        raise ValueError(f"Error converting layers to RGBA: {e}")
     
-    # Debugging: Check layer sizes
+    # Debugging: Check layer sizes and if they are created properly
     if top_layer.size != bottom_layer.size:
         raise ValueError(f"Top and Bottom layers have different sizes: {top_layer.size}, {bottom_layer.size}")
     
