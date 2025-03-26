@@ -49,8 +49,9 @@ def process_image(uploaded_image):
     except:
         font = ImageFont.load_default()  # Fallback to default font if DejaVuSans-Bold is unavailable
     
-    # 10. Get text dimensions and center it
-    text_width, text_height = draw.textsize(ad_text, font=font)  # Use textsize to calculate text dimensions
+    # 10. Get text dimensions and center it using textbbox
+    text_bbox = draw.textbbox((0, 0), ad_text, font=font)
+    text_width, text_height = text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1]  # Calculate width and height
     text_position = ((canvas_size[0] - text_width) // 2, (canvas_size[1] - text_height) // 2)
     
     # 11. Draw the text
