@@ -63,13 +63,18 @@ def process_image(uploaded_image):
     bottom_layer = bottom_layer.convert("RGBA")
     
     # Create a semi-transparent version of the image layers (opacity 0.6 for the top and bottom layers)
-    top_layer = top_layer.putalpha(153)  # 153 out of 255 for 60% opacity
-    bottom_layer = bottom_layer.putalpha(204)  # 204 out of 255 for 80% opacity
+    top_layer.putalpha(153)  # 153 out of 255 for 60% opacity
+    bottom_layer.putalpha(204)  # 204 out of 255 for 80% opacity
     
     # 13. Composite layers (text at the bottom, image layers on top)
-    final_image = Image.alpha_composite(bottom_layer, text_layer)  # Composite text as bottom layer first
-    final_image = Image.alpha_composite(final_image, top_layer)  # Composite other image layers on top
-    
+    try:
+        # Ensure the layers are not None and composited correctly
+        final_image = Image.alpha_composite(bottom_layer, text_layer)  # Composite text as bottom layer first
+        final_image = Image.alpha_composite(final_image, top_layer)  # Composite other image layers on top
+    except Exception as e:
+        print(f"Error during alpha_composite: {e}")
+        final_image = img.convert("RGBA")  # If error occurs, return the original image
+
     return final_image
 
 def main():
