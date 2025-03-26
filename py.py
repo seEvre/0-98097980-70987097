@@ -1,6 +1,6 @@
-import streamlit as st
 from PIL import Image, ImageEnhance, ImageFilter, ImageDraw, ImageFont
 import numpy as np
+import streamlit as st
 
 def process_image(uploaded_image):
     # Set canvas size
@@ -43,20 +43,20 @@ def process_image(uploaded_image):
     
     ad_text = "FLUORINES COOL CLOTHING SHOP!!"
     
-    # Attempt to load a TTF font; otherwise, fallback
+    # 9. Use DejaVuSans-Bold font available by default in Streamlit Cloud
     try:
-        font = ImageFont.truetype("arial.ttf", 76)  # Set exact font size to 76
+        font = ImageFont.truetype("DejaVuSans-Bold.ttf", 76)  # Set exact font size to 76
     except:
-        font = ImageFont.load_default()
+        font = ImageFont.load_default()  # Fallback to default font if DejaVuSans-Bold is unavailable
     
-    # 9. Get text dimensions and center it
-    text_width, text_height = draw.textbbox((0, 0), ad_text, font=font)[2:]
+    # 10. Get text dimensions and center it
+    text_width, text_height = draw.textsize(ad_text, font=font)  # Use textsize to calculate text dimensions
     text_position = ((canvas_size[0] - text_width) // 2, (canvas_size[1] - text_height) // 2)
     
-    # 10. Draw the text
+    # 11. Draw the text
     draw.text(text_position, ad_text, fill=(0, 0, 0, 255), font=font)
     
-    # 11. Composite text over image
+    # 12. Composite text over image
     final_image = Image.alpha_composite(merged_image, text_layer)
     
     return final_image
