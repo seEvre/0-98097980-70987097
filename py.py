@@ -33,19 +33,19 @@ def process_image(uploaded_image):
     sepia = np.clip(sepia, 0, 255).astype(np.uint8)
     bottom_layer = Image.fromarray(sepia)
     
-    # 7. Merge layers
+    # 7. Merge layers (top and bottom layers are blended here)
     merged_image = Image.blend(bottom_layer, top_layer, 1)
     merged_image = merged_image.convert("RGBA")  # Convert to RGBA
     
-    # 8. Create text layer
+    # 8. Create text layer (now this will be the bottom layer)
     text_layer = Image.new("RGBA", canvas_size, (255, 255, 255, 0))
     draw = ImageDraw.Draw(text_layer)
     
     ad_text = "FLUORINES COOL CLOTHING SHOP!!"
     
-    # 9. Use DejaVuSans-Bold font available by default in Streamlit Cloud
+    # 9. Use DejaVuSans-Bold font available by default in Streamlit Cloud with size 90
     try:
-        font = ImageFont.truetype("DejaVuSans-Bold.ttf", 76)  # Set exact font size to 76
+        font = ImageFont.truetype("DejaVuSans-Bold.ttf", 90)  # Set font size to 90
     except:
         font = ImageFont.load_default()  # Fallback to default font if DejaVuSans-Bold is unavailable
     
@@ -54,10 +54,10 @@ def process_image(uploaded_image):
     text_width, text_height = text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1]  # Calculate width and height
     text_position = ((canvas_size[0] - text_width) // 2, (canvas_size[1] - text_height) // 2)
     
-    # 11. Draw the text
+    # 11. Draw the text on the text layer
     draw.text(text_position, ad_text, fill=(0, 0, 0, 255), font=font)
     
-    # 12. Composite text over image
+    # 12. Composite the text layer below the image layers
     final_image = Image.alpha_composite(merged_image, text_layer)
     
     return final_image
